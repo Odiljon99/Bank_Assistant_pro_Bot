@@ -8,8 +8,7 @@ from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.enums import ParseMode
-from aiogram.filters import CommandStart
-from aiogram.filters.text import Text
+from aiogram.filters import Text
 from dotenv import load_dotenv
 
 load_dotenv()
