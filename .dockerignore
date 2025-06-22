@@ -1,7 +1,3 @@
-.git
-__pycache__
-.env
+__pycache__/
 *.pyc
-*.pyo
-*.pyd
-*.sqlite3
+.git/
