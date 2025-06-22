@@ -217,8 +217,8 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
-'''
-with open("/mnt/data/main_new.py", "w", encoding="utf-8") as f:
-    f.write(code)
-
-"/mnt/data/main_new.py"
+async def main():  
+    await dp.start_polling(bot)  
+  
+if __name__ == "__main__":  
+    asyncio.run(main())
