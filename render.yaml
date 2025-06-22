@@ -4,11 +4,6 @@ services:
     env: python
     buildCommand: pip install -r requirements.txt
     startCommand: python main.py
-    envVars:
-      - key: BOT_TOKEN
-        sync: false
-      - key: GROUP_CHAT_ID
-        sync: false
     plan: free
     runtime: python
     region: oregon
