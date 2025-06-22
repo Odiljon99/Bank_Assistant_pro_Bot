@@ -1,36 +1,78 @@
+import asyncio
 import logging
 import sqlite3
-from aiogram import Bot, Dispatcher, executor, types
-from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton
-from aiogram.contrib.fsm_storage.memory import MemoryStorage
-from aiogram.dispatcher.filters.state import State, StatesGroup
-from aiogram.dispatcher import FSMContext
-from aiogram.dispatcher.filters import Text
-from dotenv import load_dotenv
 import os
+from aiogram import Bot, Dispatcher, F
+from aiogram.types import Message, CallbackQuery, ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.fsm.state import State, StatesGroup
+from aiogram.fsm.context import FSMContext
+from aiogram.fsm.storage.memory import MemoryStorage
+from aiogram.enums import ParseMode
+from aiogram.filters import CommandStart, Text
+from dotenv import load_dotenv
 
 load_dotenv()
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 GROUP_ID = int(os.getenv("GROUP_CHAT_ID"))
 
 logging.basicConfig(level=logging.INFO)
-bot = Bot(token=BOT_TOKEN, parse_mode=types.ParseMode.MARKDOWN)
-dp = Dispatcher(bot, storage=MemoryStorage())
+bot = Bot(token=BOT_TOKEN, parse_mode=ParseMode.MARKDOWN)
+dp = Dispatcher(storage=MemoryStorage())
 
-# База данных
 conn = sqlite3.connect("users.db")
 cursor = conn.cursor()
 cursor.execute("""
-    CREATE TABLE IF NOT EXISTS users (
-        user_id INTEGER PRIMARY KEY,
-        full_name TEXT,
-        phone TEXT,
-        birth TEXT,
-        pinfl TEXT,
-        lang TEXT
-    )
+CREATE TABLE IF NOT EXISTS users (
+    user_id INTEGER PRIMARY KEY,
+    full_name TEXT,
+    phone TEXT,
+    birth TEXT,
+    pinfl TEXT,
+    lang TEXT
+)
 """)
 conn.commit()
+
+langs = {
+    'ru': {
+        'choose_lang': "Выберите язык / Tilni tanlang:",
+        'start_warning': "❗ Не шутите, действия отслеживаются.",
+        'send_full_name': "Введите ФИО:",
+        'send_phone': "Введите номер телефона:",
+        'send_birth': "Введите дату рождения (ДД.ММ.ГГГГ):",
+        'send_pinfl': "Введите ПИНФЛ (14 цифр):",
+        'reg_done': "✅ Зарегистрированы",
+        'menu': "📋 Главное меню:",
+        'credit_history': "📈 Кредитная история",
+        'credit_calc': "📊 Кредит калькулятор",
+        'manager': "👤 Менеджер",
+        'my_data': "📁 Мои данные",
+        'change_lang': "🌐 Сменить язык",
+        'back': "🔙 Назад",
+        'main_menu': "🏠 Меню",
+        'send_problem': "Опишите проблему:",
+        'problem_sent': "✅ Заявка отправлена"
+    },
+    'uz': {
+        'choose_lang': "Выберите язык / Tilni tanlang:",
+        'start_warning': "❗ Iltimos, hazillashmang.",
+        'send_full_name': "FIO kiriting:",
+        'send_phone': "Telefon raqam:",
+        'send_birth': "Tug'ilgan sana (KK.OY.YYYY):",
+        'send_pinfl': "PINFL (14 raqam):",
+        'reg_done': "✅ Ro‘yxatdan o‘tildi",
+        'menu': "📋 Asosiy menyu:",
+        'credit_history': "📈 Kredit tarixi",
+        'credit_calc': "📊 Kredit kalkulyatori",
+        'manager': "👤 Menejer",
+        'my_data': "📁 Mening ma’lumotlarim",
+        'change_lang': "🌐 Tilni o‘zgartirish",
+        'back': "🔙 Orqaga",
+        'main_menu': "🏠 Menyu",
+        'send_problem': "Muammoni yozing:",
+        'problem_sent': "✅ So‘rov yuborildi"
+    }
+}
 
 class Register(StatesGroup):
     language = State()
@@ -42,155 +84,141 @@ class Register(StatesGroup):
 
 user_data = {}
 
-# Языки
-langs = {
-    'ru': {
-        'welcome': "Добро пожаловать в бот банковского помощника.",
-        'menu': "📋 Главное меню:",
-        'reg_done': "✅ Вы успешно зарегистрированы.",
-        'send_full_name': "Введите ваше ФИО:",
-        'send_phone': "Введите номер телефона:",
-        'send_birth': "Введите дату рождения (ДД.ММ.ГГГГ):",
-        'send_pinfl': "Введите ваш ПИНФЛ (14 цифр):\n🔍 Найти можно в паспорте или онлайн в приложении банка.",
-        'change_lang': "🇷🇺 Сменить язык",
-        'to_menu': "🔙 В меню",
-        'send_problem': "Опишите вашу проблему:",
-        'problem_sent': "✅ Ваша заявка отправлена. Ожидайте ответ.",
-        'start_warning': "❗ Пожалуйста, не используйте бота ради шутки. Ваши действия отслеживаются.",
-        'choose_lang': "Выберите язык / Tilni tanlang:"
-    },
-    'uz': {
-        'welcome': "Bank yordamchi botiga xush kelibsiz.",
-        'menu': "📋 Asosiy menyu:",
-        'reg_done': "✅ Roʻyxatdan oʻtdingiz.",
-        'send_full_name': "FISH ni kiriting:",
-        'send_phone': "Telefon raqamingizni kiriting:",
-        'send_birth': "Tug'ilgan sanangiz (KK.OY.YYYY):",
-        'send_pinfl': "PINFL kiriting (14 raqam):\n🔍 Uni pasportda yoki bank ilovasida topishingiz mumkin.",
-        'change_lang': "🇺🇿 Tilni o‘zgartirish",
-        'to_menu': "🔙 Menyuga",
-        'send_problem': "Muammoni yozing:",
-        'problem_sent': "✅ So‘rovingiz yuborildi. Javobni kuting.",
-        'start_warning': "❗ Iltimos, botdan hazil uchun foydalanmang. Harakatlaringiz nazorat qilinadi.",
-        'choose_lang': "Выберите язык / Tilni tanlang:"
-    }
-}
+def menu_kb(lang: str):
+    kb = ReplyKeyboardMarkup(resize_keyboard=True)
+    kb.add(langs[lang]['credit_history'], langs[lang]['credit_calc'])
+    kb.add(langs[lang]['manager'], langs[lang]['my_data'])
+    kb.add(langs[lang]['change_lang'], langs[lang]['main_menu'])
+    return kb
 
-# Старт
-@dp.message_handler(commands="start")
-async def start_cmd(message: types.Message, state: FSMContext):
-    markup = ReplyKeyboardMarkup(resize_keyboard=True)
-    markup.add(KeyboardButton("🇷🇺 Русский"), KeyboardButton("🇺🇿 O‘zbek"))
-    await message.answer(langs['ru']['choose_lang'], reply_markup=markup)
-    await Register.language.set()
+@dp.message(CommandStart())
+async def cmd_start(message: Message, state: FSMContext):
+    kb = ReplyKeyboardMarkup(resize_keyboard=True)
+    kb.add("🇷🇺 Русский", "🇺🇿 O‘zbek")
+    await message.answer(langs['ru']['choose_lang'], reply_markup=kb)
+    await state.set_state(Register.language)
 
-# Выбор языка
-@dp.message_handler(lambda msg: msg.text in ["🇷🇺 Русский", "🇺🇿 O‘zbek"], state=Register.language)
-async def set_lang(message: types.Message, state: FSMContext):
+@dp.message(Register.language, F.text.in_(["🇷🇺 Русский","🇺🇿 O‘zbek"]))
+async def set_language(message: Message, state: FSMContext):
     lang = 'ru' if "Рус" in message.text else 'uz'
     await state.update_data(lang=lang)
-    await message.answer(langs[lang]['start_warning'])
-    await message.answer(langs[lang]['send_full_name'], reply_markup=types.ReplyKeyboardRemove())
-    await Register.full_name.set()
+    await message.answer(langs[lang]['start_warning'], reply_markup=ReplyKeyboardMarkup(resize_keyboard=True).add(langs[lang]['back']))
+    await message.answer(langs[lang]['send_full_name'])
+    await state.set_state(Register.full_name)
 
-@dp.message_handler(state=Register.full_name)
-async def full_name(message: types.Message, state: FSMContext):
-    await state.update_data(full_name=message.text)
-    await message.answer(langs[(await state.get_data())['lang']]['send_phone'])
-    await Register.phone.set()
-
-@dp.message_handler(state=Register.phone)
-async def phone(message: types.Message, state: FSMContext):
-    await state.update_data(phone=message.text)
-    await message.answer(langs[(await state.get_data())['lang']]['send_birth'])
-    await Register.birth.set()
-
-@dp.message_handler(state=Register.birth)
-async def birth(message: types.Message, state: FSMContext):
-    await state.update_data(birth=message.text)
-    await message.answer(langs[(await state.get_data())['lang']]['send_pinfl'])
-    await Register.pinfl.set()
-
-@dp.message_handler(state=Register.pinfl)
-async def pinfl(message: types.Message, state: FSMContext):
+@dp.message(Register.full_name)
+async def set_fullname(message: Message, state: FSMContext):
     data = await state.get_data()
-    data['pinfl'] = message.text
+    if message.text == langs[data['lang']]['back']:
+        return await cmd_start(message, state)
+    await state.update_data(full_name=message.text)
+    await message.answer(langs[data['lang']]['send_phone'], reply_markup=ReplyKeyboardMarkup(resize_keyboard=True).add(langs[data['lang']]['back']))
+    await state.set_state(Register.phone)
 
-    # Сохраняем в БД
-    cursor.execute("REPLACE INTO users (user_id, full_name, phone, birth, pinfl, lang) VALUES (?, ?, ?, ?, ?, ?)", (
-        message.from_user.id,
-        data['full_name'],
-        data['phone'],
-        data['birth'],
-        data['pinfl'],
-        data['lang']
+@dp.message(Register.phone)
+async def set_phone(message: Message, state: FSMContext):
+    data = await state.get_data()
+    if message.text == langs[data['lang']]['back']:
+        return await set_fullname(message, state)
+    await state.update_data(phone=message.text)
+    await message.answer(langs[data['lang']]['send_birth'], reply_markup=ReplyKeyboardMarkup(resize_keyboard=True).add(langs[data['lang']]['back']))
+    await state.set_state(Register.birth)
+
+@dp.message(Register.birth)
+async def set_birth(message: Message, state: FSMContext):
+    data = await state.get_data()
+    if message.text == langs[data['lang']]['back']:
+        return await set_phone(message, state)
+    await state.update_data(birth=message.text)
+    await message.answer(langs[data['lang']]['send_pinfl'], reply_markup=ReplyKeyboardMarkup(resize_keyboard=True).add(langs[data['lang']]['back']))
+    await state.set_state(Register.pinfl)
+
+@dp.message(Register.pinfl)
+async def set_pinfl(message: Message, state: FSMContext):
+    data = await state.get_data()
+    if message.text == langs[data['lang']]['back']:
+        return await set_birth(message, state)
+    await state.update_data(pinfl=message.text)
+    data = await state.get_data()
+    cursor.execute("REPLACE INTO users VALUES (?,?,?,?,?,?)", (
+        message.from_user.id, data['full_name'], data['phone'], data['birth'], data['pinfl'], data['lang']
     ))
     conn.commit()
+    await message.answer(langs[data['lang']]['reg_done'], reply_markup=menu_kb(data['lang']))
+    await state.clear()
 
-    # Меню
-    menu = ReplyKeyboardMarkup(resize_keyboard=True)
-    menu.add("📈 Кредитная история", "📊 Кредит калькулятор", "👤 Менеджер")
-    menu.add(langs[data['lang']]['change_lang'], langs[data['lang']]['to_menu'])
-    await message.answer(langs[data['lang']]['reg_done'], reply_markup=menu)
-    await state.finish()
-
-# Обработка меню
-@dp.message_handler(Text(equals=["📈 Кредитная история", "📊 Кредит калькулятор", "👤 Менеджер"]))
-async def menu(message: types.Message):
-    text = message.text
-    user = cursor.execute("SELECT * FROM users WHERE user_id = ?", (message.from_user.id,)).fetchone()
-    lang = user[-1] if user else 'ru'
-
-    if text == "📈 Кредитная история":
-        await message.answer(langs[lang]['send_problem'])
-        await Register.problem.set()
-    elif text == "📊 Кредит калькулятор":
-        await message.answer("👉 Запустить кредит калькулятор: @YOUR_CREDIT_BOT")
-    elif text == "👤 Менеджер":
-        await message.answer("✍️ Напишите вашу проблему, менеджер ответит в ближайшее время.")
-        await Register.problem.set()
-
-@dp.message_handler(state=Register.problem)
-async def get_problem(message: types.Message, state: FSMContext):
-    user = cursor.execute("SELECT * FROM users WHERE user_id = ?", (message.from_user.id,)).fetchone()
+@dp.message(F.text.in_([langs['ru']['my_data'], langs['uz']['my_data']]))
+async def my_data(message: Message):
+    user = cursor.execute("SELECT * FROM users WHERE user_id=?", (message.from_user.id,)).fetchone()
     lang = user[-1]
+    text = f"👤 {user[1]}\n📞 {user[2]}\n🎂 {user[3]}\n🆔 {user[4]}"
+    await message.answer(text, reply_markup=menu_kb(lang))
+
+@dp.message(F.text.in_([langs['ru']['change_lang'], langs['uz']['change_lang']]))
+async def change_lang(message: Message, state: FSMContext):
+    return await cmd_start(message, state)
+
+@dp.message(F.text.in_([langs['ru']['main_menu'], langs['uz']['main_menu']]))
+async def to_menu(message: Message):
+    user = cursor.execute("SELECT * FROM users WHERE user_id=?", (message.from_user.id,)).fetchone()
+    lang = user[-1]
+    await message.answer(langs[lang]['menu'], reply_markup=menu_kb(lang))
+
+@dp.message(F.text.in_([langs['ru']['credit_history'], langs['uz']['credit_history'], langs['ru']['manager'], langs['uz']['manager']]))
+async def start_problem(message: Message, state: FSMContext):
+    user = cursor.execute("SELECT * FROM users WHERE user_id=?", (message.from_user.id,)).fetchone()
+    lang = user[-1]
+    await message.answer(langs[lang]['send_problem'], reply_markup=ReplyKeyboardMarkup(resize_keyboard=True).add(langs[lang]['back'], langs[lang]['main_menu']))
+    await state.set_state(Register.problem)
+
+@dp.message(Register.problem)
+async def handle_problem(message: Message, state: FSMContext):
+    data = cursor.execute("SELECT * FROM users WHERE user_id=?", (message.from_user.id,)).fetchone()
+    lang = data[-1]
     text = message.text
-
-    report = f"""📩 *Новая проблема от* @{message.from_user.username or message.from_user.full_name}
-
-📝 _"{text}"_
-
-⏳ Статус: Ожидает ответа"""
-
-    markup = InlineKeyboardMarkup().add(
-        InlineKeyboardButton("🔁 Ответить", callback_data=f"answer:{message.from_user.id}"),
-        InlineKeyboardButton("✅ Завершить", callback_data=f"close:{message.from_user.id}")
-    )
-
+    report = (f"📩 *Новая проблема от* @{message.from_user.username or message.from_user.full_name}\n\n"
+              f"📝 _\"{text}\"_\n\n⏳ Статус: Ожидает ответа")
+    markup = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton("🔁 Ответить", callback_data=f"answer:{message.from_user.id}")],
+        [InlineKeyboardButton("✅ Завершить", callback_data=f"close:{message.from_user.id}")]
+    ])
     sent = await bot.send_message(chat_id=GROUP_ID, text=report, reply_markup=markup)
-    user_data[message.from_user.id] = {"msg_id": sent.message_id, "chat_id": sent.chat.id}
+    user_data[message.from_user.id] = {"chat_id": sent.chat.id, "msg_id": sent.message_id}
+    await message.answer(langs[lang]['problem_sent'], reply_markup=menu_kb(lang))
+    await state.clear()
 
-    await message.answer(langs[lang]['problem_sent'])
-    await state.finish()
-
-# Кнопки для сотрудников
-@dp.callback_query_handler(Text(startswith="answer:"))
-async def answer_problem(call: types.CallbackQuery):
-    user_id = int(call.data.split(":")[1])
-    await call.message.answer(f"📝 Введите ответ для @{user_id}")
+@dp.callback_query(F.data.startswith("answer:"))
+async def answer_query(call: CallbackQuery):
+    uid = int(call.data.split(":")[1])
+    await call.message.answer("📝 Введите ответ:")
     await call.answer()
+    user_data['answer_for'] = uid
 
-@dp.callback_query_handler(Text(startswith="close:"))
-async def close_problem(call: types.CallbackQuery):
-    user_id = int(call.data.split(":")[1])
-    data = user_data.get(user_id)
-    if data:
-        await bot.edit_message_text(
-            chat_id=data["chat_id"],
-            message_id=data["msg_id"],
-            text=call.message.text.replace("⏳ Статус: Ожидает ответа", f"✅ Статус: Завершено\n👤 Ответил: @{call.from_user.username}")
-        )
-    await call.answer("Заявка завершена.")
+@dp.message(lambda m: 'answer_for' in user_data)
+async def send_answer(message: Message):
+    uid = user_data.pop('answer_for')
+    reply = message.text
+    data = user_data.get(uid)
+    await bot.send_message(chat_id=uid, text=reply)
+    await bot.edit_message_text(chat_id=data['chat_id'], message_id=data['msg_id'],
+                                text=(message.reply_to_message.text + f"\n✅ Статус: Ответ отправлен\n👤 Ответил: @{message.from_user.username}"))
+    await message.answer("Ответ отправлен.", reply_markup=menu_kb(langs[cursor.execute("SELECT lang FROM users WHERE user_id=?", (message.from_user.id,)).fetchone()[0]]))
+
+@dp.callback_query(F.data.startswith("close:"))
+async def close_query(call: CallbackQuery):
+    uid = int(call.data.split(":")[1])
+    data = user_data.get(uid)
+    await bot.edit_message_text(chat_id=data['chat_id'], message_id=data['msg_id'],
+                                text=(call.message.text.replace("⏳ Статус: Ожидает ответа", f"✅ Статус: Завершено\n👤 Ответил: @{call.from_user.username}")))
+    await call.answer("Заявка закрыта.")
+
+async def main():
+    await dp.start_polling(bot)
 
 if __name__ == "__main__":
-    executor.start_polling(dp, skip_updates=True)
+    asyncio.run(main())
+'''
+with open("/mnt/data/main_new.py", "w", encoding="utf-8") as f:
+    f.write(code)
+
+"/mnt/data/main_new.py"
