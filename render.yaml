@@ -1,9 +1,6 @@
 services:
   - type: web
     name: bank-assistant-bot
-    env: python
-    buildCommand: pip install -r requirements.txt
-    startCommand: python main.py
+    env: docker
     plan: free
-    runtime: python
     region: oregon
