@@ -8,15 +8,20 @@ from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.enums import ParseMode
-from aiogram.filters import CommandStart
+from aiogram.client.default import DefaultBotProperties  # ВАЖНО
 from dotenv import load_dotenv
+from aiogram.filters import CommandStart
 
 load_dotenv()
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 GROUP_ID = int(os.getenv("GROUP_CHAT_ID"))
 
 logging.basicConfig(level=logging.INFO)
-bot = Bot(token=BOT_TOKEN, parse_mode=ParseMode.MARKDOWN)
+
+bot = Bot(
+    token=BOT_TOKEN,
+    default=DefaultBotProperties(parse_mode=ParseMode.MARKDOWN)  # <-- вот правильный способ
+)
 dp = Dispatcher(storage=MemoryStorage())
 
 conn = sqlite3.connect("users.db")
@@ -98,7 +103,7 @@ async def cmd_start(message: Message, state: FSMContext):
     await message.answer(langs['ru']['choose_lang'], reply_markup=kb)
     await state.set_state(Register.language)
 
-@dp.message(Register.language, F.text.in_(["🇷🇺 Русский","🇺🇿 O‘zbek"]))
+@dp.message(Register.language, F.text.in_(["🇷🇺 Русский", "🇺🇿 O‘zbek"]))
 async def set_language(message: Message, state: FSMContext):
     lang = 'ru' if "Рус" in message.text else 'uz'
     await state.update_data(lang=lang)
