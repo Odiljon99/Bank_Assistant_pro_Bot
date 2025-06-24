@@ -8,7 +8,7 @@ from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.enums import ParseMode
-from aiogram.client.default import DefaultBotProperties  # ВАЖНО
+from aiogram.client.default import DefaultBotProperties
 from dotenv import load_dotenv
 from aiogram.filters import CommandStart
 
@@ -20,7 +20,7 @@ logging.basicConfig(level=logging.INFO)
 
 bot = Bot(
     token=BOT_TOKEN,
-    default=DefaultBotProperties(parse_mode=ParseMode.MARKDOWN)  # <-- вот правильный способ
+    default=DefaultBotProperties(parse_mode=ParseMode.MARKDOWN)
 )
 dp = Dispatcher(storage=MemoryStorage())
 
@@ -156,7 +156,10 @@ async def set_pinfl(message: Message, state: FSMContext):
 async def my_data(message: Message):
     user = cursor.execute("SELECT * FROM users WHERE user_id=?", (message.from_user.id,)).fetchone()
     lang = user[-1]
-    text = f"👤 {user[1]}\n📞 {user[2]}\n🎂 {user[3]}\n🆔 {user[4]}"
+    text = f"👤 {user[1]}
+📞 {user[2]}
+🎂 {user[3]}
+🆔 {user[4]}"
     await message.answer(text, reply_markup=menu_kb(lang))
 
 @dp.message(F.text.in_([langs['ru']['change_lang'], langs['uz']['change_lang']]))
@@ -181,8 +184,12 @@ async def handle_problem(message: Message, state: FSMContext):
     data = cursor.execute("SELECT * FROM users WHERE user_id=?", (message.from_user.id,)).fetchone()
     lang = data[-1]
     text = message.text
-    report = (f"📩 *Новая проблема от* @{message.from_user.username or message.from_user.full_name}\n\n"
-              f"📝 _\"{text}\"_\n\n⏳ Статус: Ожидает ответа")
+    report = (f"📩 *Новая проблема от* @{message.from_user.username or message.from_user.full_name}
+
+"
+              f"📝 _"{text}"_
+
+⏳ Статус: Ожидает ответа")
     markup = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton("🔁 Ответить", callback_data=f"answer:{message.from_user.id}")],
         [InlineKeyboardButton("✅ Завершить", callback_data=f"close:{message.from_user.id}")]
