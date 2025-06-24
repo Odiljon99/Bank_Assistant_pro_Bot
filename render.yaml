@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: bank-assistant-pro
+    env: python
+    plan: free
+    buildCommand: ""
+    startCommand: python3 server.py
+    envVars:
+      - key: BOT_TOKEN
+        sync: false
+      - key: GROUP_CHAT_ID
+        sync: false
+      - key: ADMINS
+        sync: false
+      - key: WEBHOOK_SECRET
+        sync: false
