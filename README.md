@@ -1,30 +1,16 @@
-# Bank Assistant Bot
-
-Telegram-бот для регистрации клиентов, обработки проблем и управления данными.
+# Telegram Webhook Bot
 
 ## Установка
 
-```
+1. Создайте `.env` файл на основе `.env.example`
+2. Установите зависимости:
+
+```bash
 pip install -r requirements.txt
 ```
 
-Создай файл `.env`:
+3. Запустите локально:
 
+```bash
+python webhook_server.py
 ```
-BOT_TOKEN=твой_токен
-GROUP_CHAT_ID=-123456789
-```
-
-## Запуск
-
-```
-python main.py
-```
-
-## Deploy на Render
-
-1. Подключи GitHub репозиторий
-2. Укажи `main.py` как entry point
-3. Пропиши переменные окружения в Render:
-   - `BOT_TOKEN`
-   - `GROUP_CHAT_ID`
