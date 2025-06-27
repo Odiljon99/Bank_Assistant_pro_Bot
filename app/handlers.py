@@ -32,7 +32,7 @@ async def select_language(message: Message, state: FSMContext):
     await state.update_data(lang=lang)
     await message.answer(
         langs[lang]["warning_text"],
-        reply_markup=get_agree_keyboard(lang)  # ← ИСПРАВЛЕНО ЗДЕСЬ
+        reply_markup=get_agree_keyboard(lang)
     )
 
 # ⚠️ Подтверждение согласия
@@ -44,7 +44,7 @@ async def agreement_accepted(message: Message, state: FSMContext):
     await message.answer(langs[lang]["ask_full_name"])
     await state.set_state(RegisterState.full_name)
 
-# 👤 Пример дальнейших шагов (регистрация)
+# 👤 ФИО
 @router.message(RegisterState.full_name)
 async def get_full_name(message: Message, state: FSMContext):
     await state.update_data(full_name=message.text)
@@ -52,6 +52,42 @@ async def get_full_name(message: Message, state: FSMContext):
     lang = data.get("lang", "ru")
     await message.answer(langs[lang]["ask_phone"])
     await state.set_state(RegisterState.phone)
+
+# 📞 Телефон
+@router.message(RegisterState.phone)
+async def get_phone(message: Message, state: FSMContext):
+    await state.update_data(phone=message.text)
+    data = await state.get_data()
+    lang = data.get("lang", "ru")
+    await message.answer(langs[lang]["ask_birthday"])
+    await state.set_state(RegisterState.birthday)
+
+# 📅 Дата рождения
+@router.message(RegisterState.birthday)
+async def get_birthday(message: Message, state: FSMContext):
+    await state.update_data(birthday=message.text)
+    data = await state.get_data()
+    lang = data.get("lang", "ru")
+    await message.answer(langs[lang]["ask_pinfl"])
+    await state.set_state(RegisterState.pinfl)
+
+# 🆔 ПИНФЛ + Сохранение в БД
+@router.message(RegisterState.pinfl)
+async def get_pinfl(message: Message, state: FSMContext):
+    await state.update_data(pinfl=message.text)
+    data = await state.get_data()
+    lang = data.get("lang", "ru")
+
+    # Импортируем базу
+    from app.database import cursor, conn
+    cursor.execute(
+        "INSERT INTO users (telegram_id, full_name, phone, birthday, pinfl) VALUES (?, ?, ?, ?, ?)",
+        (message.from_user.id, data["full_name"], data["phone"], data["birthday"], data["pinfl"])
+    )
+    conn.commit()
+
+    await message.answer("✅ Данные сохранены! Спасибо за регистрацию.", reply_markup=get_main_menu(lang))
+    await state.clear()
 
 # 🔘 Главное меню
 @router.message(F.text.in_([langs["ru"]["menu"], langs["uz"]["menu"]]))
