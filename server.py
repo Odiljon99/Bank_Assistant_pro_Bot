@@ -14,7 +14,6 @@ async def on_startup():
 
 app = web.Application()
 setup_application(app, dp, bot=bot)
-app.router.add_route("*", config.WEBHOOK_PATH, SimpleRequestHandler(dp=dp, bot=bot))
-
+app.router.add_route("*", config.WEBHOOK_PATH, SimpleRequestHandler(dispatcher=dp, bot=bot))
 if __name__ == "__main__":
     web.run_app(app, host="0.0.0.0", port=10000)
