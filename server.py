@@ -10,8 +10,9 @@ dp.include_router(router)
 
 # Функция, вызываемая при старте приложения
 async def on_startup(app: web.Application):
-    await bot.set_webhook(f"{config.WEBHOOK_URL}{config.WEBHOOK_PATH}")
-    print("✅ Webhook установлен!")
+    webhook_url = f"{config.WEBHOOK_URL}{config.WEBHOOK_PATH}"
+    await bot.set_webhook(webhook_url)
+    print(f"✅ Webhook установлен по адресу: {webhook_url}")
 
 # Создаем aiohttp-приложение
 app = web.Application()
