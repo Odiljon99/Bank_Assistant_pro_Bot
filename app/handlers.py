@@ -3,7 +3,7 @@ from aiogram.types import Message, ReplyKeyboardRemove
 from aiogram.fsm.context import FSMContext
 from aiogram.filters import Command
 from app.messages import langs
-from app.keyboards import get_main_menu, get_language_keyboard, get_agreement_keyboard
+from app.keyboards import get_main_menu, get_language_keyboard, get_agree_keyboard
 from app.config import ADMINS
 from aiogram.fsm.state import StatesGroup, State
 
