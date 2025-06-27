@@ -32,7 +32,7 @@ async def select_language(message: Message, state: FSMContext):
     await state.update_data(lang=lang)
     await message.answer(
         langs[lang]["warning_text"],
-        reply_markup=get_agreement_keyboard(lang)
+        reply_markup=get_agree_keyboard(lang)  # ← ИСПРАВЛЕНО ЗДЕСЬ
     )
 
 # ⚠️ Подтверждение согласия
