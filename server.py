@@ -19,4 +19,4 @@ app.router.add_route("*", config.WEBHOOK_PATH, SimpleRequestHandler(dispatcher=d
 
 if __name__ == "__main__":
     asyncio.run(on_startup())
-    web.run_app(app, host="0.0.0.0", port=10000)
+    web.run_app(app, host="0.0.0.0", port=8080)
