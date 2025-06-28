@@ -69,8 +69,12 @@ async def get_phone(message: Message, state: FSMContext):
     await state.set_state(RegisterState.birthday)
 
 # 📅 Дата рождения (инлайн-календарь)
-@router.callback_query(RegisterState.birthday)
+@router.callback_query(F.data.startswith("calendar:"))
 async def process_calendar(callback: CallbackQuery, state: FSMContext):
+    current_state = await state.get_state()
+    if current_state != RegisterState.birthday.state:
+        return await callback.answer()
+
     selected_date = callback.data.split(":")[-1]  # calendar:YYYY-MM-DD → YYYY-MM-DD
     await callback.message.delete_reply_markup()
     await state.update_data(birthday=selected_date)
@@ -108,3 +112,8 @@ async def admin_panel(message: Message):
     if message.from_user.id not in ADMINS:
         return await message.answer("⛔️ У вас нет доступа")
     await message.answer("👮‍♂️ Добро пожаловать в админ-панель!")
+
+# Обработка "ignore" callback'ов
+@router.callback_query(F.data == "ignore")
+async def ignore_handler(callback: CallbackQuery):
+    await callback.answer()
