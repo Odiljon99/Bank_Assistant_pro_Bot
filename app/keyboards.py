@@ -1,15 +1,22 @@
-from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.types import (
+    ReplyKeyboardMarkup, KeyboardButton,
+    InlineKeyboardMarkup, InlineKeyboardButton
+)
 from app.messages import langs
-from datetime import datetime, timedelta
 
-def get_main_menu(lang):
-    return ReplyKeyboardMarkup(
-        resize_keyboard=True,
-        keyboard=[
-            [KeyboardButton(text=langs[lang]["menu"])],
-            [KeyboardButton(text=langs[lang]["admin_panel"])],
-        ]
-    )
+
+def get_main_menu(lang, is_admin=False):
+    buttons = [
+        [KeyboardButton(text="📊 Узнать кредитную историю")],
+        [KeyboardButton(text="📈 Кредит калькулятор")],
+        [KeyboardButton(text="💬 Обратиться к менеджеру")],
+        [KeyboardButton(text="🌐 Изменить язык")],
+        [KeyboardButton(text="📑 Мои данные")]
+    ]
+    if is_admin:
+        buttons.append([KeyboardButton(text=langs[lang]["admin_panel"])])
+    return ReplyKeyboardMarkup(resize_keyboard=True, keyboard=buttons)
+
 
 def get_language_keyboard():
     return ReplyKeyboardMarkup(
@@ -19,6 +26,7 @@ def get_language_keyboard():
         ]
     )
 
+
 def get_agree_keyboard(lang):
     return ReplyKeyboardMarkup(
         resize_keyboard=True,
@@ -27,36 +35,37 @@ def get_agree_keyboard(lang):
         ]
     )
 
-# 📅 Календарь для выбора даты
-def get_calendar_keyboard(year=None, month=None):
-    now = datetime.now()
-    year = year or now.year
-    month = month or now.month
 
-    days_in_month = (datetime(year + (month // 12), (month % 12) + 1, 1) - timedelta(days=1)).day
-    first_day = datetime(year, month, 1).weekday()  # 0 - Monday
+def get_credit_history_agree_keyboard(lang):
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(
+                    text="✅ Согласен отправить данные" if lang == "ru" else "✅ Maʼlumotlarni yuborishga roziman",
+                    callback_data="agree_send_data"
+                )
+            ]
+        ]
+    )
 
-    # Заголовок и дни недели
-    keyboard = [
-        [InlineKeyboardButton(text=f"{year}-{month:02d}", callback_data="ignore")],
-        [InlineKeyboardButton(day, callback_data="ignore") for day in ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"]]
-    ]
 
-    # Пустые ячейки перед 1 числом
-    row = []
-    for _ in range((first_day + 6) % 7):
-        row.append(InlineKeyboardButton(" ", callback_data="ignore"))
+def get_admin_panel_keyboard():
+    return ReplyKeyboardMarkup(
+        resize_keyboard=True,
+        keyboard=[
+            [KeyboardButton(text="📋 Список пользователей")],
+            [KeyboardButton(text="🔎 Найти пользователя")],
+            [KeyboardButton(text="↩️ Назад")]
+        ]
+    )
 
-    # Дни месяца
-    for day in range(1, days_in_month + 1):
-        row.append(InlineKeyboardButton(str(day), callback_data=f"calendar:{year}-{month:02d}-{day:02d}"))
-        if len(row) == 7:
-            keyboard.append(row)
-            row = []
 
-    if row:
-        while len(row) < 7:
-            row.append(InlineKeyboardButton(" ", callback_data="ignore"))
-        keyboard.append(row)
-
-    return InlineKeyboardMarkup(inline_keyboard=keyboard)
+def get_edit_data_menu(lang):
+    return ReplyKeyboardMarkup(
+        resize_keyboard=True,
+        keyboard=[
+            [KeyboardButton(text="📛 ФИО"), KeyboardButton(text="📞 Телефон")],
+            [KeyboardButton(text="📅 Дата рождения"), KeyboardButton(text="🆔 ПИНФЛ")],
+            [KeyboardButton(text="↩️ Назад")]
+        ]
+    )
