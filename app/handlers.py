@@ -1,9 +1,9 @@
 from aiogram import Router, F
-from aiogram.types import Message, ReplyKeyboardRemove, CallbackQuery
+from aiogram.types import Message, ReplyKeyboardRemove
 from aiogram.fsm.context import FSMContext
 from aiogram.filters import Command
 from app.messages import langs
-from app.keyboards import get_main_menu, get_language_keyboard, get_agree_keyboard, get_calendar_keyboard
+from app.keyboards import get_main_menu, get_language_keyboard, get_agree_keyboard
 from app.config import ADMINS
 from aiogram.fsm.state import StatesGroup, State
 import re
@@ -14,7 +14,9 @@ router = Router()
 class RegisterState(StatesGroup):
     full_name = State()
     phone = State()
-    birthday = State()
+    birth_day = State()
+    birth_month = State()
+    birth_year = State()
     pinfl = State()
 
 # 🚀 Стартовая команда
@@ -51,7 +53,7 @@ async def get_full_name(message: Message, state: FSMContext):
     await state.update_data(full_name=message.text)
     data = await state.get_data()
     lang = data.get("lang", "ru")
-    await message.answer("📞 Введите номер телефона (например: 991112233)")
+    await message.answer(langs[lang]["ask_phone"])
     await state.set_state(RegisterState.phone)
 
 # 📞 Телефон
@@ -70,24 +72,50 @@ async def get_phone(message: Message, state: FSMContext):
     await state.update_data(phone=phone)
     data = await state.get_data()
     lang = data.get("lang", "ru")
-    await message.answer("📅 Пожалуйста, выберите дату рождения:", reply_markup=get_calendar_keyboard())
-    await state.set_state(RegisterState.birthday)
+    await message.answer(langs[lang]["ask_birth_day"])
+    await state.set_state(RegisterState.birth_day)
 
-# 📅 Дата рождения (инлайн-календарь)
-@router.callback_query(F.data.startswith("calendar:"))
-async def process_calendar(callback: CallbackQuery, state: FSMContext):
-    current_state = await state.get_state()
-    if current_state != RegisterState.birthday.state:
-        return await callback.answer()
-
-    selected_date = callback.data.split(":")[-1]  # calendar:YYYY-MM-DD
-    await callback.message.delete_reply_markup()
-    await state.update_data(birthday=selected_date)
+# 📅 День рождения — день
+@router.message(RegisterState.birth_day)
+async def get_birth_day(message: Message, state: FSMContext):
+    if not message.text.isdigit() or not (1 <= int(message.text) <= 31):
+        return await message.answer("❌ Введите число от 1 до 31.")
+    await state.update_data(birth_day=int(message.text))
     data = await state.get_data()
     lang = data.get("lang", "ru")
-    await callback.message.answer(langs[lang]["ask_pinfl"])
+    await message.answer(langs[lang]["ask_birth_month"])
+    await state.set_state(RegisterState.birth_month)
+
+# 📅 День рождения — месяц
+@router.message(RegisterState.birth_month)
+async def get_birth_month(message: Message, state: FSMContext):
+    if not message.text.isdigit() or not (1 <= int(message.text) <= 12):
+        return await message.answer("❌ Введите число от 1 до 12.")
+    await state.update_data(birth_month=int(message.text))
+    data = await state.get_data()
+    lang = data.get("lang", "ru")
+    await message.answer(langs[lang]["ask_birth_year"])
+    await state.set_state(RegisterState.birth_year)
+
+# 📅 День рождения — год
+@router.message(RegisterState.birth_year)
+async def get_birth_year(message: Message, state: FSMContext):
+    if not message.text.isdigit() or not (1900 <= int(message.text) <= 2025):
+        return await message.answer("❌ Введите корректный год рождения.")
+    await state.update_data(birth_year=int(message.text))
+
+    data = await state.get_data()
+    lang = data.get("lang", "ru")
+
+    # Сборка даты
+    day = f"{data['birth_day']:02d}"
+    month = f"{data['birth_month']:02d}"
+    year = f"{data['birth_year']}"
+    birthday = f"{year}-{month}-{day}"
+    await state.update_data(birthday=birthday)
+
+    await message.answer(langs[lang]["ask_pinfl"])
     await state.set_state(RegisterState.pinfl)
-    await callback.answer()
 
 # 🆔 ПИНФЛ + Сохранение в БД
 @router.message(RegisterState.pinfl)
@@ -117,8 +145,3 @@ async def admin_panel(message: Message):
     if message.from_user.id not in ADMINS:
         return await message.answer("⛔️ У вас нет доступа")
     await message.answer("👮‍♂️ Добро пожаловать в админ-панель!")
-
-# Обработка "ignore" callback'ов
-@router.callback_query(F.data == "ignore")
-async def ignore_handler(callback: CallbackQuery):
-    await callback.answer()
