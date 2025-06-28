@@ -57,11 +57,16 @@ async def get_full_name(message: Message, state: FSMContext):
 # 📞 Телефон
 @router.message(RegisterState.phone)
 async def get_phone(message: Message, state: FSMContext):
-    phone_raw = message.text.strip()
-    if not re.fullmatch(r"\d{9}", phone_raw):
-        return await message.answer("❌ Номер должен содержать ровно 9 цифр, например: 991112233")
+    raw_input = message.text.strip()
+    cleaned = re.sub(r"[^\d]", "", raw_input)
 
-    phone = f"998{phone_raw}"
+    if cleaned.startswith("998"):
+        cleaned = cleaned[3:]
+
+    if len(cleaned) != 9:
+        return await message.answer("❌ Номер должен содержать ровно 9 цифр (без кода страны). Например: 991112233")
+
+    phone = f"998{cleaned}"
     await state.update_data(phone=phone)
     data = await state.get_data()
     lang = data.get("lang", "ru")
@@ -75,7 +80,7 @@ async def process_calendar(callback: CallbackQuery, state: FSMContext):
     if current_state != RegisterState.birthday.state:
         return await callback.answer()
 
-    selected_date = callback.data.split(":")[-1]  # calendar:YYYY-MM-DD → YYYY-MM-DD
+    selected_date = callback.data.split(":")[-1]  # calendar:YYYY-MM-DD
     await callback.message.delete_reply_markup()
     await state.update_data(birthday=selected_date)
     data = await state.get_data()
