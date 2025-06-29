@@ -3,10 +3,14 @@ from aiohttp import web
 from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
 from app import bot, dp, config
 from app.database import cursor, conn
-from app.handler import router
 
-# Подключаем маршруты
-dp.include_router(router)
+# ⬇️ Подключаем все нужные обработчики
+from app.handler import main_handlers
+from app.handler import credit
+
+# ⬇️ Регистрируем роутеры
+dp.include_router(main_handlers.router)
+dp.include_router(credit.router)
 
 # ✅ Функция при запуске
 async def on_startup(app: web.Application):
@@ -22,12 +26,10 @@ async def on_shutdown(app: web.Application):
 # Создаём aiohttp-приложение
 app = web.Application()
 app.on_startup.append(on_startup)
-app.on_shutdown.append(on_shutdown)  # ← ВАЖНО: добавляем
+app.on_shutdown.append(on_shutdown)
 
 # Настройка webhook
 setup_application(app, dp, bot=bot)
-
-# Добавляем маршрут webhook
 app.router.add_route("*", config.WEBHOOK_PATH, SimpleRequestHandler(dispatcher=dp, bot=bot))
 
 # Запуск
