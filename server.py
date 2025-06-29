@@ -4,34 +4,33 @@ from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_applicati
 from app import bot, dp, config
 from app.database import cursor, conn
 
-# ⬇️ Подключаем все нужные обработчики
-from app.handler import main_handlers
-from app.handler import credit
+# 👉 ИМПОРТ РОУТЕРОВ по структуре
+from app.main_handlers import router as main_router
+from app.handler.credit import router as credit_router
 
-# ⬇️ Регистрируем роутеры
-dp.include_router(main_handlers.router)
-dp.include_router(credit.router)
+# 👉 Регистрируем роутеры
+dp.include_router(main_router)
+dp.include_router(credit_router)
 
-# ✅ Функция при запуске
+# ✅ При запуске
 async def on_startup(app: web.Application):
     webhook_url = f"{config.WEBHOOK_URL}{config.WEBHOOK_PATH}"
     await bot.set_webhook(webhook_url)
     print(f"✅ Webhook установлен по адресу: {webhook_url}")
 
-# ✅ Функция при остановке
+# ✅ При остановке
 async def on_shutdown(app: web.Application):
     await bot.session.close()
     print("🛑 Сессия Telegram закрыта")
 
-# Создаём aiohttp-приложение
+# Запуск aiohttp
 app = web.Application()
 app.on_startup.append(on_startup)
 app.on_shutdown.append(on_shutdown)
 
-# Настройка webhook
 setup_application(app, dp, bot=bot)
 app.router.add_route("*", config.WEBHOOK_PATH, SimpleRequestHandler(dispatcher=dp, bot=bot))
 
-# Запуск
+# 🚀 Запуск
 if __name__ == "__main__":
     web.run_app(app, host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
