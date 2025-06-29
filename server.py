@@ -3,7 +3,7 @@ from aiohttp import web
 from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
 from app import bot, dp, config
 from app.database import cursor, conn
-from app.handlers import router
+from app.handler import router
 
 # Подключаем маршруты
 dp.include_router(router)
