@@ -2,7 +2,7 @@ from aiogram import Router, F
 from aiogram.types import Message, CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.fsm.context import FSMContext
 from app.database import get_user_by_telegram_id
-from app.messages import langs
+from app.messages import langs, get_lang_safe
 from app.config import ADMINS
 
 router = Router()
@@ -19,16 +19,17 @@ def get_credit_request_buttons(user_id: int):
         ]
     )
 
-@router.message(F.text == "📊 Узнать кредитную историю")
+@router.message(F.text.in_([
+    langs["ru"]["main_menu_options"][0],
+    langs["uz"]["main_menu_options"][0]
+]))
 async def request_credit_history(message: Message, state: FSMContext):
     data = await state.get_data()
-    lang = data.get("lang", "ru")
+    lang = get_lang_safe(data.get("lang", "ru"))
     from app.keyboards import get_credit_history_agree_keyboard
 
     await message.answer(
-        "Чтобы узнать вашу кредитную историю, мы должны отправить ваши данные менеджеру. Вы согласны?"
-        if lang == "ru"
-        else "Kredit tarixingizni bilish uchun biz ma‘lumotlaringizni menejerga yuborishimiz kerak. Rozimisiz?",
+        langs[lang]["send_data_consent"],
         reply_markup=get_credit_history_agree_keyboard(lang)
     )
 
