@@ -1,7 +1,7 @@
 from aiogram import Router, F
 from aiogram.types import Message, CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.fsm.context import FSMContext
-from app.database import get_user_by_telegram_id
+from app.database import get_user_by_telegram_id  # ✅ async
 from app.messages import langs, get_lang_safe
 from app.config import ADMINS
 
@@ -36,7 +36,7 @@ async def request_credit_history(message: Message, state: FSMContext):
 @router.callback_query(F.data == "agree_send_data")
 async def send_credit_request(callback: CallbackQuery):
     user_id = callback.from_user.id
-    user_data = get_user_by_telegram_id(user_id)
+    user_data = await get_user_by_telegram_id(user_id)  # ✅ async
 
     if not user_data:
         return await callback.message.answer("⛔️ Данные не найдены")
