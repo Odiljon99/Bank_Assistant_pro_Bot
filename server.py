@@ -4,11 +4,11 @@ from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_applicati
 from app import bot, dp, config
 from app.database import cursor, conn
 
-# 👉 ИМПОРТ РОУТЕРОВ по структуре
+# 👉 Импорт роутеров
 from app.main_handlers import router as main_router
 from app.handler.credit import router as credit_router
 
-# 👉 Регистрируем роутеры
+# 👉 Регистрация роутеров
 dp.include_router(main_router)
 dp.include_router(credit_router)
 
@@ -23,7 +23,7 @@ async def on_shutdown(app: web.Application):
     await bot.session.close()
     print("🛑 Сессия Telegram закрыта")
 
-# Запуск aiohttp
+# Создание приложения aiohttp
 app = web.Application()
 app.on_startup.append(on_startup)
 app.on_shutdown.append(on_shutdown)
