@@ -1,3 +1,6 @@
+def get_lang_safe(lang: str) -> str:
+    return lang if lang in langs else "ru"
+
 langs = {
     "ru": {
         "menu": "📋 Главное меню:",
@@ -18,8 +21,6 @@ langs = {
         "ask_birth_month": "📅 Введите месяц рождения (число от 1 до 12):",
         "ask_birth_year": "📅 Введите год рождения (например: 1995):",
         "ask_pinfl": "🆔 Введите ваш ПИНФЛ:",
-
-        # Меню
         "main_menu_options": [
             "🔍 Узнать кредитную историю",
             "📈 Кредит калькулятор",
@@ -61,8 +62,6 @@ langs = {
         "ask_birth_month": "📅 Tug‘ilgan oyingizni kiriting (1 dan 12 gacha son):",
         "ask_birth_year": "📅 Tug‘ilgan yilingizni kiriting (masalan: 1995):",
         "ask_pinfl": "🆔 PINFL raqamingizni kiriting:",
-
-        # Menyu
         "main_menu_options": [
             "🔍 Kredit tarixini bilish",
             "📈 Kredit kalkulyatori",
