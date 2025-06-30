@@ -4,8 +4,11 @@ from aiogram.types import (
 )
 from app.messages import langs
 
+def get_lang_safe(lang: str) -> str:
+    return lang if lang in langs else "ru"
 
 def get_main_menu(lang: str, is_admin: bool = False) -> ReplyKeyboardMarkup:
+    lang = get_lang_safe(lang)
     buttons = [
         [KeyboardButton(text=langs[lang]["main_menu_options"][0])],  # Узнать кредитную историю
         [KeyboardButton(text=langs[lang]["main_menu_options"][1])],  # Кредит калькулятор
@@ -17,7 +20,6 @@ def get_main_menu(lang: str, is_admin: bool = False) -> ReplyKeyboardMarkup:
         buttons.append([KeyboardButton(text=langs[lang]["admin_panel"])])
     return ReplyKeyboardMarkup(resize_keyboard=True, keyboard=buttons)
 
-
 def get_language_keyboard() -> ReplyKeyboardMarkup:
     return ReplyKeyboardMarkup(
         resize_keyboard=True,
@@ -26,8 +28,8 @@ def get_language_keyboard() -> ReplyKeyboardMarkup:
         ]
     )
 
-
 def get_agree_keyboard(lang: str) -> ReplyKeyboardMarkup:
+    lang = get_lang_safe(lang)
     return ReplyKeyboardMarkup(
         resize_keyboard=True,
         keyboard=[
@@ -35,8 +37,8 @@ def get_agree_keyboard(lang: str) -> ReplyKeyboardMarkup:
         ]
     )
 
-
 def get_credit_history_agree_keyboard(lang: str) -> InlineKeyboardMarkup:
+    lang = get_lang_safe(lang)
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
@@ -48,8 +50,8 @@ def get_credit_history_agree_keyboard(lang: str) -> InlineKeyboardMarkup:
         ]
     )
 
-
 def get_admin_panel_keyboard(lang: str) -> ReplyKeyboardMarkup:
+    lang = get_lang_safe(lang)
     return ReplyKeyboardMarkup(
         resize_keyboard=True,
         keyboard=[
@@ -59,8 +61,8 @@ def get_admin_panel_keyboard(lang: str) -> ReplyKeyboardMarkup:
         ]
     )
 
-
 def get_edit_data_menu(lang: str) -> ReplyKeyboardMarkup:
+    lang = get_lang_safe(lang)
     return ReplyKeyboardMarkup(
         resize_keyboard=True,
         keyboard=[
