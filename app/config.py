@@ -11,4 +11,4 @@ WEBHOOK_PATH = f"/webhook/{WEBHOOK_SECRET}"
 WEBHOOK_URL = os.getenv("WEBHOOK_URL")
 
 # ID админов — список чисел (можно указать свои ID)
-ADMINS = [123456789]
+ADMINS = [566180107]
