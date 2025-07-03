@@ -55,9 +55,9 @@ async def send_credit_request(callback: CallbackQuery):
     await callback.message.answer("✉️ Заявка отправлена, ожидайте ответа")
 
 print("⏳ Отправка заявки в группу:", STAFF_GROUP_ID)
-print("📝 Текст заявки:", text)
-    
-     await callback.bot.send_message(
+    print("📝 Текст заявки:", text)
+
+    await callback.bot.send_message(
         STAFF_GROUP_ID,
         text,
         reply_markup=get_credit_request_buttons(user_id),
