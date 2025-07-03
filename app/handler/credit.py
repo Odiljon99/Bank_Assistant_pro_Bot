@@ -36,7 +36,7 @@ async def request_credit_history(message: Message, state: FSMContext):
 @router.callback_query(F.data == "agree_send_data")
 async def send_credit_request(callback: CallbackQuery):
     user_id = callback.from_user.id
-    user_data = await get_user_by_telegram_id(user_id)  # ✅ ВАЖНО: добавлен await
+    user_data = await get_user_by_telegram_id(user_id)
 
     if not user_data:
         return await callback.message.answer("⛔️ Данные не найдены")
@@ -53,9 +53,6 @@ async def send_credit_request(callback: CallbackQuery):
 
     await callback.answer("✉️ Данные отправлены")
     await callback.message.answer("✉️ Заявка отправлена, ожидайте ответа")
-
-    print("⏳ Отправка заявки в группу:", STAFF_GROUP_ID)
-    print("📝 Текст заявки:", text)
 
     await callback.bot.send_message(
         STAFF_GROUP_ID,
