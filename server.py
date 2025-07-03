@@ -2,19 +2,21 @@ import os
 from aiohttp import web
 from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
 from app import bot, dp, config
-from app.database import create_users_table  # ✅ добавили
+from app.database import create_users_table
 
 # 👉 Импорт роутеров
 from app.main_handlers import router as main_router
 from app.handler.credit import router as credit_router
+from app.handler.debug import router as debug_router  # ✅ добавили debug_router
 
 # 👉 Регистрация роутеров
 dp.include_router(main_router)
 dp.include_router(credit_router)
+dp.include_router(debug_router)  # ✅ добавили debug_router
 
 # ✅ При запуске
 async def on_startup(app: web.Application):
-    await create_users_table()  # ✅ создаём таблицу при старте
+    await create_users_table()
     webhook_url = f"{config.WEBHOOK_URL}{config.WEBHOOK_PATH}"
     await bot.set_webhook(webhook_url)
     print(f"✅ Webhook установлен по адресу: {webhook_url}")
