@@ -7,12 +7,10 @@ from app.database import create_users_table
 # 👉 Импорт роутеров
 from app.main_handlers import router as main_router
 from app.handler.credit import router as credit_router
-from app.handler.debug import router as debug_router  # ✅ добавили debug_router
 
 # 👉 Регистрация роутеров
 dp.include_router(main_router)
 dp.include_router(credit_router)
-dp.include_router(debug_router)  # ✅ добавили debug_router
 
 # ✅ При запуске
 async def on_startup(app: web.Application):
