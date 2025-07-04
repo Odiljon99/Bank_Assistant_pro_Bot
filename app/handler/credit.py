@@ -7,7 +7,7 @@ from app.config import ADMINS
 
 router = Router()
 
-STAFF_GROUP_ID = -4813065675  # Убедись, что бот админ в этой группе
+STAFF_GROUP_ID = -1002551245369  # Убедись, что бот админ в этой группе
 
 def get_credit_request_buttons(user_id: int):
     return InlineKeyboardMarkup(
