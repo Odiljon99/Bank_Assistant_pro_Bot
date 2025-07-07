@@ -34,9 +34,12 @@ async def request_credit_history(message: Message, state: FSMContext):
     )
 
 @router.callback_query(F.data == "agree_send_data")
-async def send_credit_request(callback: CallbackQuery):
+async def send_credit_request(callback: CallbackQuery, state: FSMContext):
     user_id = callback.from_user.id
     user_data = await get_user_by_telegram_id(user_id)
+
+    data = await state.get_data()
+    lang = get_lang_safe(data.get("lang", "ru"))
 
     if not user_data:
         return await callback.message.answer("⛔️ Данные не найдены")
@@ -44,15 +47,15 @@ async def send_credit_request(callback: CallbackQuery):
     full_name, phone, birthday, pinfl = user_data
 
     text = (
-        f"✉️ Новая заявка\n"
+        f"✉️ {langs[lang]['new_report']}\n"
         f"<b>ФИО:</b> {full_name}\n"
         f"<b>Телефон:</b> {phone}\n"
         f"<b>Дата рождения:</b> {birthday}\n"
         f"<b>ПИНФЛ:</b> {pinfl}"
     )
 
-    await callback.answer("✉️ Данные отправлены")
-    await callback.message.answer("✉️ Заявка отправлена, ожидайте ответа")
+    await callback.answer("✉️ " + langs[lang]["data_sent_to_staff"])
+    await callback.message.answer("✉️ " + langs[lang]["data_sent_to_staff"])
 
     await callback.bot.send_message(
         STAFF_GROUP_ID,
@@ -78,8 +81,11 @@ async def collect_reply_for_client(message: Message, state: FSMContext):
     await state.update_data(reply_target=None)
 
 @router.callback_query(F.data.startswith("finish_request:"))
-async def finish_request(callback: CallbackQuery):
+async def finish_request(callback: CallbackQuery, state: FSMContext):
     user_id = int(callback.data.split(":")[1])
-    await callback.bot.send_message(user_id, "✅ Заявка завершена. Если у вас будут ещё вопросы, обращайтесь!")
+    data = await state.get_data()
+    lang = get_lang_safe(data.get("lang", "ru"))
+
+    await callback.bot.send_message(user_id, "✅ " + langs[lang]["complete"] + " " + langs[lang]["menu"])
     await callback.message.edit_reply_markup()
-    await callback.answer("✅ Завершено")
+    await callback.answer("✅ " + langs[lang]["complete"])
