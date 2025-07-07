@@ -10,13 +10,13 @@ from app.keyboards import (
     get_main_menu,
     get_language_keyboard,
     get_agree_keyboard,
-    get_back_keyboard
+    get_back_keyboard,
 )
 from app.config import ADMINS
 from app.database import (
     get_user_by_telegram_id,
     save_user,
-    update_user_field
+    update_user_field,
 )
 
 router = Router()
