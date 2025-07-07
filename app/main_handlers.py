@@ -5,13 +5,16 @@ from aiogram.filters import Command
 from aiogram.fsm.state import StatesGroup, State import re
 
 from app.messages import langs 
-from app.keyboards import ( get_main_menu, get_language_keyboard, get_agree_keyboard, get_back_keyboard, ) from app.config import ADMINS from app.database import ( get_user_by_telegram_id, save_user, update_user_field, get_user_lang )
+from app.keyboards import ( get_main_menu, get_language_keyboard, get_agree_keyboard, get_back_keyboard, ) 
+from app.config import ADMINS from app.database import ( get_user_by_telegram_id, save_user, update_user_field, get_user_lang )
 
 router = Router()
 
 class RegisterState(StatesGroup): full_name = State() phone = State() birth_day = State() birth_month = State() birth_year = State() pinfl = State()
 
 class EditFieldState(StatesGroup): choosing = State() editing = State()
+
+class ChangeLangState(StatesGroup): choosing = State()
 
 def get_lang(state_data, fallback="ru"): return state_data.get("lang") if state_data.get("lang") in langs else fallback
 
@@ -36,4 +39,8 @@ def get_lang(state_data, fallback="ru"): return state_data.get("lang") if state_
 @router.message(F.text.in_([langs["ru"]["menu"], langs["uz"]["menu"]])) async def main_menu(message: Message, state: FSMContext): lang = await get_user_lang(message.from_user.id) await state.update_data(lang=lang) await message.answer(langs[lang]["menu"], reply_markup=get_main_menu(lang))
 
 @router.message(F.text.in_([langs["ru"]["admin_panel"], langs["uz"]["admin_panel"]])) async def admin_panel(message: Message, state: FSMContext): if message.from_user.id not in ADMINS: return await message.answer("⛔️ У вас нет доступа") lang = await get_user_lang(message.from_user.id) await state.update_data(lang=lang) await message.answer("👮‍♂️ Добро пожаловать в админ-панель!", reply_markup=get_main_menu(lang, is_admin=True))
+
+@router.message(F.text.in_([langs["ru"]["main_menu_options"][3], langs["uz"]["main_menu_options"][3]])) async def change_language(message: Message, state: FSMContext): lang = await get_user_lang(message.from_user.id) await state.update_data(lang=lang) await message.answer(langs[lang]["choose_language"], reply_markup=get_language_keyboard()) await state.set_state(ChangeLangState.choosing)
+
+@router.message(ChangeLangState.choosing, F.text.in_(["🇷🇺 Русский", "🇺🇿 O‘zbek"])) async def update_language_selection(message: Message, state: FSMContext): new_lang = "ru" if message.text == "🇷🇺 Русский" else "uz" await update_user_field(message.from_user.id, "lang", new_lang) await state.update_data(lang=new_lang) await message.answer(langs[new_lang]["language_changed"], reply_markup=get_main_menu(new_lang)) await state.clear()
 
