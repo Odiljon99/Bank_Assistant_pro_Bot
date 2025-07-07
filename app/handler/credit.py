@@ -9,6 +9,7 @@ router = Router()
 
 STAFF_GROUP_ID = -1002551245369  # Убедись, что бот админ в этой группе
 
+
 def get_credit_request_buttons(user_id: int):
     return InlineKeyboardMarkup(
         inline_keyboard=[
@@ -19,43 +20,48 @@ def get_credit_request_buttons(user_id: int):
         ]
     )
 
+
 @router.message(F.text.in_([
     langs["ru"]["main_menu_options"][0],
     langs["uz"]["main_menu_options"][0]
 ]))
 async def request_credit_history(message: Message, state: FSMContext):
-    data = await state.get_data()
-    lang = get_lang_safe(data.get("lang", "ru"))
-    from app.keyboards import get_credit_history_agree_keyboard
+    user = await get_user_by_telegram_id(message.from_user.id)
+    lang = user["lang"] if user else "ru"
+    texts = get_lang_safe(lang)
 
+    from app.keyboards import get_credit_history_agree_keyboard
     await message.answer(
-        langs[lang]["send_data_consent"],
+        texts["send_data_consent"],
         reply_markup=get_credit_history_agree_keyboard(lang)
     )
+
 
 @router.callback_query(F.data == "agree_send_data")
 async def send_credit_request(callback: CallbackQuery, state: FSMContext):
     user_id = callback.from_user.id
     user_data = await get_user_by_telegram_id(user_id)
-
-    data = await state.get_data()
-    lang = get_lang_safe(data.get("lang", "ru"))
-
     if not user_data:
         return await callback.message.answer("⛔️ Данные не найдены")
 
-    full_name, phone, birthday, pinfl = user_data
+    lang = user_data.get("lang", "ru")
+    texts = get_lang_safe(lang)
+
+    full_name = user_data["full_name"]
+    phone = user_data["phone"]
+    birthday = user_data["birthday"]
+    pinfl = user_data["pinfl"]
 
     text = (
-        f"✉️ {langs[lang]['new_report']}\n"
+        f"✉️ {texts['new_report']}\n"
         f"<b>ФИО:</b> {full_name}\n"
         f"<b>Телефон:</b> {phone}\n"
         f"<b>Дата рождения:</b> {birthday}\n"
         f"<b>ПИНФЛ:</b> {pinfl}"
     )
 
-    await callback.answer("✉️ " + langs[lang]["data_sent_to_staff"])
-    await callback.message.answer("✉️ " + langs[lang]["data_sent_to_staff"])
+    await callback.answer("✉️ " + texts["data_sent_to_staff"])
+    await callback.message.answer("✉️ " + texts["data_sent_to_staff"])
 
     await callback.bot.send_message(
         STAFF_GROUP_ID,
@@ -64,12 +70,14 @@ async def send_credit_request(callback: CallbackQuery, state: FSMContext):
         parse_mode="HTML"
     )
 
+
 @router.callback_query(F.data.startswith("reply_to_client:"))
 async def reply_to_client(callback: CallbackQuery, state: FSMContext):
     user_id = int(callback.data.split(":")[1])
     await state.update_data(reply_target=user_id)
     await callback.message.answer("📝 Напишите свой ответ для клиента")
     await callback.answer()
+
 
 @router.message(F.from_user.id.in_(ADMINS))
 async def collect_reply_for_client(message: Message, state: FSMContext):
@@ -80,12 +88,14 @@ async def collect_reply_for_client(message: Message, state: FSMContext):
     await message.bot.send_message(target_id, f"📢 Ответ от менеджера:\n{message.text}")
     await state.update_data(reply_target=None)
 
+
 @router.callback_query(F.data.startswith("finish_request:"))
 async def finish_request(callback: CallbackQuery, state: FSMContext):
     user_id = int(callback.data.split(":")[1])
-    data = await state.get_data()
-    lang = get_lang_safe(data.get("lang", "ru"))
+    user_data = await get_user_by_telegram_id(user_id)
+    lang = user_data.get("lang", "ru") if user_data else "ru"
+    texts = get_lang_safe(lang)
 
-    await callback.bot.send_message(user_id, "✅ " + langs[lang]["complete"] + " " + langs[lang]["menu"])
+    await callback.bot.send_message(user_id, "✅ " + texts["complete"] + " " + texts["menu"])
     await callback.message.edit_reply_markup()
-    await callback.answer("✅ " + langs[lang]["complete"])
+    await callback.answer("✅ " + texts["complete"])
