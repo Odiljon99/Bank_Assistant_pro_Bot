@@ -50,7 +50,7 @@ async def start_handler(message: Message, state: FSMContext):
         await state.update_data(lang=lang)
         await message.answer("👋 Добро пожаловать обратно!", reply_markup=get_main_menu(lang))
     else:
-        await state.update_data(lang="ru")  # по умолчанию, пока не выберет
+        await state.update_data(lang="ru")
         await message.answer(
             "🇷🇺 Пожалуйста, выберите язык / 🇺🇿 Iltimos, tilni tanlang",
             reply_markup=get_language_keyboard()
