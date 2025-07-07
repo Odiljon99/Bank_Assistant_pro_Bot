@@ -11,7 +11,7 @@ from app.keyboards import (
     get_back_keyboard,
 )
 from app.database import save_user, get_user_by_telegram_id, update_user_field
-from app.messages import langs, get_lang_safe
+from app.messages import get_lang_safe
 
 import re
 
