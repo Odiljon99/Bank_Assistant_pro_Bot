@@ -1,5 +1,5 @@
-def get_lang_safe(lang: str) -> str:
-    return lang if lang in langs else "ru"
+def get_lang_safe(lang: str) -> dict:
+    return langs.get(lang, langs["ru"])
 
 langs = {
     "ru": {
@@ -40,7 +40,17 @@ langs = {
         "complete": "✅ Завершить",
         "language_changed": "🌐 Язык успешно изменён.",
         "data_updated": "✅ Данные успешно обновлены.",
-        "choose_language": "🌐 Выберите язык:"
+        "choose_language": "🌐 Выберите язык:",
+
+        # 🔽 Дополнительно для FSM
+        "full_name": "📛 Введите ваше ФИО:",
+        "phone": "📞 Введите номер телефона:",
+        "birthday": "🎂 Введите дату рождения:",
+        "pinfl": "🆔 Введите ваш ПИНФЛ:",
+        "saved": "✅ Данные сохранены!",
+        "invalid_phone": "❗ Неверный формат телефона. Попробуйте снова.",
+        "enter_new_value": "✏️ Введите новое значение:",
+        "choose_field": "✏️ Что вы хотите изменить?"
     },
 
     "uz": {
@@ -53,7 +63,7 @@ langs = {
             "⚠️ DIQQAT!\n\n"
             "Maʼlumotlaringizni yuborish orqali siz ularni qayta ishlashga rozilik bildirasiz.\n"
             "Biz maxfiylik va xavfsizlikni kafolatlaymiz.\n\n"
-            "Agar rozisiz, quyidagi tugmani bosing."
+            "Agar rozimisiz, quyidagi tugmani bosing."
         ),
         "start_registration": "📝 Ro‘yxatdan o‘tishni boshlaymiz. Iltimos, quyidagi savollarga javob bering.",
         "ask_full_name": "📛 To‘liq ismingizni kiriting:",
@@ -81,6 +91,16 @@ langs = {
         "complete": "✅ Tugatildi",
         "language_changed": "🌐 Til muvaffaqiyatli o‘zgartirildi.",
         "data_updated": "✅ Ma’lumotlar yangilandi.",
-        "choose_language": "🌐 Tilni tanlang:"
+        "choose_language": "🌐 Tilni tanlang:",
+
+        # 🔽 Qo‘shimcha FSM uchun
+        "full_name": "📛 To‘liq ism sharifingizni kiriting:",
+        "phone": "📞 Telefon raqamingizni kiriting:",
+        "birthday": "🎂 Tug‘ilgan sanangizni kiriting:",
+        "pinfl": "🆔 PINFL raqamingizni kiriting:",
+        "saved": "✅ Ma’lumotlar saqlandi!",
+        "invalid_phone": "❗ Telefon raqami noto‘g‘ri formatda. Qayta urinib ko‘ring.",
+        "enter_new_value": "✏️ Yangi qiymatni kiriting:",
+        "choose_field": "✏️ Qaysi ma’lumotni o‘zgartirmoqchisiz?"
     }
 }
