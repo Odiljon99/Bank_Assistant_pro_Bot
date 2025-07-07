@@ -1,45 +1,56 @@
 import aiosqlite
 
+DB_NAME = "users.db"
 
+# 📌 Создание таблицы
 async def create_users_table():
-    async with aiosqlite.connect("users.db") as db:
-        await db.execute("""
+    async with aiosqlite.connect(DB_NAME) as db:
+        await db.execute('''
             CREATE TABLE IF NOT EXISTS users (
-                telegram_id INTEGER PRIMARY KEY,
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                telegram_id INTEGER UNIQUE,
                 full_name TEXT,
                 phone TEXT,
                 birthday TEXT,
-                pinfl TEXT
+                pinfl TEXT,
+                lang TEXT DEFAULT 'ru'
             )
-        """)
+        ''')
         await db.commit()
 
-
-async def save_user(telegram_id, full_name, phone, birthday, pinfl):
-    async with aiosqlite.connect("users.db") as db:
-        await db.execute("""
-            INSERT OR REPLACE INTO users (telegram_id, full_name, phone, birthday, pinfl)
-            VALUES (?, ?, ?, ?, ?)
-        """, (telegram_id, full_name, phone, birthday, pinfl))
+# ✅ Сохранить пользователя
+async def save_user(telegram_id, full_name, phone, birthday, pinfl, lang="ru"):
+    async with aiosqlite.connect(DB_NAME) as db:
+        await db.execute(
+            "INSERT OR REPLACE INTO users (telegram_id, full_name, phone, birthday, pinfl, lang) VALUES (?, ?, ?, ?, ?, ?)",
+            (telegram_id, full_name, phone, birthday, pinfl, lang)
+        )
         await db.commit()
 
+# 🔍 Получить по Telegram ID
+async def get_user_by_telegram_id(telegram_id: int):
+    async with aiosqlite.connect(DB_NAME) as db:
+        async with db.execute("SELECT full_name, phone, birthday, pinfl, lang FROM users WHERE telegram_id = ?", (telegram_id,)) as cursor:
+            return await cursor.fetchone()
 
-async def get_user_by_telegram_id(telegram_id):
-    async with aiosqlite.connect("users.db") as db:
-        cursor = await db.execute("SELECT * FROM users WHERE telegram_id = ?", (telegram_id,))
-        row = await cursor.fetchone()
-        if row:
-            return {
-                "telegram_id": row[0],
-                "full_name": row[1],
-                "phone": row[2],
-                "birthday": row[3],
-                "pinfl": row[4]
-            }
-        return None
+# 🔍 Все пользователи
+async def get_all_users():
+    async with aiosqlite.connect(DB_NAME) as db:
+        async with db.execute("SELECT telegram_id, full_name, phone, birthday, pinfl, lang FROM users") as cursor:
+            return await cursor.fetchall()
 
+# 🔍 Поиск по имени или ПИНФЛ
+async def search_user_by_text(query: str):
+    query = f"%{query.lower()}%"
+    async with aiosqlite.connect(DB_NAME) as db:
+        async with db.execute(
+            "SELECT telegram_id, full_name, phone, birthday, pinfl, lang FROM users WHERE LOWER(full_name) LIKE ? OR pinfl LIKE ?",
+            (query, query)
+        ) as cursor:
+            return await cursor.fetchall()
 
-async def update_user_field(telegram_id, field, value):
-    async with aiosqlite.connect("users.db") as db:
+# 🔄 Обновить поле
+async def update_user_field(telegram_id: int, field: str, value: str):
+    async with aiosqlite.connect(DB_NAME) as db:
         await db.execute(f"UPDATE users SET {field} = ? WHERE telegram_id = ?", (value, telegram_id))
         await db.commit()
