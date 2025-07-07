@@ -10,13 +10,13 @@ from app.keyboards import (
     get_main_menu,
     get_language_keyboard,
     get_agree_keyboard,
-    get_back_keyboard,
+    get_back_keyboard
 )
 from app.config import ADMINS
 from app.database import (
     get_user_by_telegram_id,
     save_user,
-    update_user_field,
+    update_user_field
 )
 
 router = Router()
@@ -50,10 +50,9 @@ async def start_handler(message: Message, state: FSMContext):
         await state.update_data(lang=lang)
         await message.answer("👋 Добро пожаловать обратно!", reply_markup=get_main_menu(lang))
     else:
-        await state.update_data(lang="ru")
         await message.answer(
             "🇷🇺 Пожалуйста, выберите язык / 🇺🇿 Iltimos, tilni tanlang",
-            reply_markup=get_language_keyboard(),
+            reply_markup=get_language_keyboard()
         )
 
 
@@ -146,7 +145,7 @@ async def get_pinfl(message: Message, state: FSMContext):
         full_name=data["full_name"],
         phone=data["phone"],
         birthday=data["birthday"],
-        pinfl=data["pinfl"],
+        pinfl=data["pinfl"]
     )
     await message.answer("✅ Данные сохранены! Спасибо за регистрацию.", reply_markup=get_main_menu(lang))
     await state.clear()
