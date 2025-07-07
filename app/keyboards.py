@@ -2,23 +2,22 @@ from aiogram.types import (
     ReplyKeyboardMarkup, KeyboardButton,
     InlineKeyboardMarkup, InlineKeyboardButton
 )
-from app.messages import langs
+from app.messages import langs, get_lang_safe
 
-def get_lang_safe(lang: str) -> str:
-    return lang if lang in langs else "ru"
 
 def get_main_menu(lang: str, is_admin: bool = False) -> ReplyKeyboardMarkup:
-    lang = get_lang_safe(lang)
+    texts = get_lang_safe(lang)
     buttons = [
-        [KeyboardButton(text=langs[lang]["main_menu_options"][0])],  # Узнать кредитную историю
-        [KeyboardButton(text=langs[lang]["main_menu_options"][1])],  # Кредит калькулятор
-        [KeyboardButton(text=langs[lang]["main_menu_options"][2])],  # Обратиться к менеджеру
-        [KeyboardButton(text=langs[lang]["main_menu_options"][3])],  # Изменить язык
-        [KeyboardButton(text=langs[lang]["main_menu_options"][4])],  # Мои данные
+        [KeyboardButton(text=texts["main_menu_options"][0])],
+        [KeyboardButton(text=texts["main_menu_options"][1])],
+        [KeyboardButton(text=texts["main_menu_options"][2])],
+        [KeyboardButton(text=texts["main_menu_options"][3])],
+        [KeyboardButton(text=texts["main_menu_options"][4])],
     ]
     if is_admin:
-        buttons.append([KeyboardButton(text=langs[lang]["admin_panel"])])
+        buttons.append([KeyboardButton(text=texts["admin_panel"])])
     return ReplyKeyboardMarkup(resize_keyboard=True, keyboard=buttons)
+
 
 def get_language_keyboard() -> ReplyKeyboardMarkup:
     return ReplyKeyboardMarkup(
@@ -28,8 +27,9 @@ def get_language_keyboard() -> ReplyKeyboardMarkup:
         ]
     )
 
+
 def get_agree_keyboard(lang: str) -> ReplyKeyboardMarkup:
-    lang = get_lang_safe(lang)
+    texts = get_lang_safe(lang)
     return ReplyKeyboardMarkup(
         resize_keyboard=True,
         keyboard=[
@@ -37,8 +37,9 @@ def get_agree_keyboard(lang: str) -> ReplyKeyboardMarkup:
         ]
     )
 
+
 def get_credit_history_agree_keyboard(lang: str) -> InlineKeyboardMarkup:
-    lang = get_lang_safe(lang)
+    texts = get_lang_safe(lang)
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
@@ -50,33 +51,42 @@ def get_credit_history_agree_keyboard(lang: str) -> InlineKeyboardMarkup:
         ]
     )
 
+
 def get_admin_panel_keyboard(lang: str) -> ReplyKeyboardMarkup:
-    lang = get_lang_safe(lang)
+    texts = get_lang_safe(lang)
     return ReplyKeyboardMarkup(
         resize_keyboard=True,
         keyboard=[
-            [KeyboardButton(text="📋 Список пользователей")],
-            [KeyboardButton(text="🔎 Найти пользователя")],
-            [KeyboardButton(text=langs[lang]["back"])]
+            [KeyboardButton(text="📋 Список пользователей" if lang == "ru" else "📋 Foydalanuvchilar ro‘yxati")],
+            [KeyboardButton(text="🔎 Найти пользователя" if lang == "ru" else "🔎 Foydalanuvchini qidirish")],
+            [KeyboardButton(text=texts["back"])]
         ]
     )
+
 
 def get_edit_data_menu(lang: str) -> ReplyKeyboardMarkup:
-    lang = get_lang_safe(lang)
+    texts = get_lang_safe(lang)
     return ReplyKeyboardMarkup(
         resize_keyboard=True,
         keyboard=[
-            [KeyboardButton(text="📛 ФИО"), KeyboardButton(text="📞 Телефон")],
-            [KeyboardButton(text="📅 Дата рождения"), KeyboardButton(text="🆔 ПИНФЛ")],
-            [KeyboardButton(text=langs[lang]["back"])]
+            [
+                KeyboardButton(text="📛 ФИО" if lang == "ru" else "📛 Ism sharifi"),
+                KeyboardButton(text="📞 Телефон" if lang == "ru" else "📞 Telefon")
+            ],
+            [
+                KeyboardButton(text="📅 Дата рождения" if lang == "ru" else "📅 Tug‘ilgan sana"),
+                KeyboardButton(text="🆔 ПИНФЛ" if lang == "ru" else "🆔 JSHSHIR")
+            ],
+            [KeyboardButton(text=texts["back"])]
         ]
     )
 
+
 def get_back_keyboard(lang: str) -> ReplyKeyboardMarkup:
-    lang = get_lang_safe(lang)
+    texts = get_lang_safe(lang)
     return ReplyKeyboardMarkup(
         resize_keyboard=True,
         keyboard=[
-            [KeyboardButton(text=langs[lang]["back"])]
+            [KeyboardButton(text=texts["back"])]
         ]
     )
