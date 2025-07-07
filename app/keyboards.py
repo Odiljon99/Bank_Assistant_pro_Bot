@@ -71,3 +71,12 @@ def get_edit_data_menu(lang: str) -> ReplyKeyboardMarkup:
             [KeyboardButton(text=langs[lang]["back"])]
         ]
     )
+
+def get_back_keyboard(lang: str) -> ReplyKeyboardMarkup:
+    lang = get_lang_safe(lang)
+    return ReplyKeyboardMarkup(
+        resize_keyboard=True,
+        keyboard=[
+            [KeyboardButton(text=langs[lang]["back"])]
+        ]
+    )
