@@ -9,14 +9,20 @@ from app.keyboards import (
     get_edit_data_menu,
     get_back_keyboard,
 )
-from app.database import save_user, get_user_by_telegram_id, update_user_field, save_partial_user
+from app.database import (
+    save_user,
+    get_user_by_telegram_id,
+    update_user_field,
+    save_partial_user,
+)
 from app.messages import get_lang_safe
 
 import re
 
 router = Router()
 
-# СТЕЙТЫ
+
+# === СТЕЙТЫ ===
 class RegisterState(StatesGroup):
     waiting_for_full_name = State()
     waiting_for_phone = State()
@@ -29,7 +35,7 @@ class EditFieldState(StatesGroup):
     editing_value = State()
 
 
-# /start
+# === /start ===
 @router.message(F.text == "/start")
 async def cmd_start(message: Message, state: FSMContext):
     await state.clear()
@@ -51,7 +57,16 @@ async def set_language(message: Message, state: FSMContext):
     await message.answer(texts["menu"], reply_markup=get_main_menu(lang))
 
 
-# Регистрация
+# === Ручной выбор языка из меню (Пункт 4) ===
+@router.message(F.text.in_([
+    "🌐 Изменить язык",
+    "🌐 Tilni o‘zgartirish"
+]))
+async def change_language_menu(message: Message, state: FSMContext):
+    await message.answer("🇷🇺 Пожалуйста, выберите язык\n🇺🇿 Iltimos, tilni tanlang", reply_markup=get_language_keyboard())
+
+
+# === Регистрация ===
 @router.message(F.text.in_(["📋 Регистрация", "📋 Ro‘yxatdan o‘tish"]))
 async def register_start(message: Message, state: FSMContext):
     user = await get_user_by_telegram_id(message.from_user.id)
@@ -121,7 +136,7 @@ async def process_pinfl(message: Message, state: FSMContext):
     await message.answer(texts["saved"], reply_markup=get_main_menu(lang))
 
 
-# Мои данные
+# === Мои данные ===
 @router.message(F.text.in_(["✏️ Мои данные", "✏️ Ma’lumotlarim"]))
 async def edit_data(message: Message, state: FSMContext):
     user = await get_user_by_telegram_id(message.from_user.id)
@@ -174,7 +189,7 @@ async def edit_value(message: Message, state: FSMContext):
     await message.answer(texts["data_updated"], reply_markup=get_main_menu(lang))
 
 
-# Назад
+# === Назад ===
 @router.message(F.text.in_(["🔙 Назад", "🔙 Orqaga"]))
 async def go_back(message: Message, state: FSMContext):
     user = await get_user_by_telegram_id(message.from_user.id)
