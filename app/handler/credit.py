@@ -9,7 +9,6 @@ router = Router()
 
 STAFF_GROUP_ID = -1002551245369  # Убедись, что бот админ в этой группе
 
-
 def get_credit_request_buttons(user_id: int):
     return InlineKeyboardMarkup(
         inline_keyboard=[
@@ -19,7 +18,6 @@ def get_credit_request_buttons(user_id: int):
             ]
         ]
     )
-
 
 @router.message(F.text.in_([
     langs["ru"]["main_menu_options"][0],
@@ -36,7 +34,6 @@ async def request_credit_history(message: Message, state: FSMContext):
         reply_markup=get_credit_history_agree_keyboard(lang)
     )
 
-
 @router.callback_query(F.data == "agree_send_data")
 async def send_credit_request(callback: CallbackQuery, state: FSMContext):
     user_id = callback.from_user.id
@@ -47,10 +44,10 @@ async def send_credit_request(callback: CallbackQuery, state: FSMContext):
     lang = user_data.get("lang", "ru")
     texts = get_lang_safe(lang)
 
-    full_name = user_data["full_name"]
-    phone = user_data["phone"]
-    birthday = user_data["birthday"]
-    pinfl = user_data["pinfl"]
+    full_name = user_data.get("full_name", "-")
+    phone = user_data.get("phone", "-")
+    birthday = user_data.get("birthday", "-")
+    pinfl = user_data.get("pinfl", "-")
 
     text = (
         f"✉️ {texts['new_report']}\n"
@@ -70,14 +67,12 @@ async def send_credit_request(callback: CallbackQuery, state: FSMContext):
         parse_mode="HTML"
     )
 
-
 @router.callback_query(F.data.startswith("reply_to_client:"))
 async def reply_to_client(callback: CallbackQuery, state: FSMContext):
     user_id = int(callback.data.split(":")[1])
     await state.update_data(reply_target=user_id)
     await callback.message.answer("📝 Напишите свой ответ для клиента")
     await callback.answer()
-
 
 @router.message(F.from_user.id.in_(ADMINS))
 async def collect_reply_for_client(message: Message, state: FSMContext):
@@ -87,7 +82,6 @@ async def collect_reply_for_client(message: Message, state: FSMContext):
         return
     await message.bot.send_message(target_id, f"📢 Ответ от менеджера:\n{message.text}")
     await state.update_data(reply_target=None)
-
 
 @router.callback_query(F.data.startswith("finish_request:"))
 async def finish_request(callback: CallbackQuery, state: FSMContext):
