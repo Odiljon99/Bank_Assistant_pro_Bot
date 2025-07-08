@@ -18,13 +18,23 @@ async def create_users_table():
         ''')
         await db.commit()
 
-# ✅ Сохранить пользователя
+# ✅ Сохранить полного пользователя
 async def save_user(telegram_id, full_name, phone, birthday, pinfl, lang="ru"):
     async with aiosqlite.connect(DB_NAME) as db:
         await db.execute(
             '''INSERT OR REPLACE INTO users (telegram_id, full_name, phone, birthday, pinfl, lang)
                VALUES (?, ?, ?, ?, ?, ?)''',
             (telegram_id, full_name, phone, birthday, pinfl, lang)
+        )
+        await db.commit()
+
+# ✅ Сохранить только язык (черновой пользователь)
+async def save_partial_user(telegram_id: int, lang: str = "ru"):
+    async with aiosqlite.connect(DB_NAME) as db:
+        await db.execute(
+            '''INSERT OR IGNORE INTO users (telegram_id, lang)
+               VALUES (?, ?)''',
+            (telegram_id, lang)
         )
         await db.commit()
 
