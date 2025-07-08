@@ -2,7 +2,6 @@ from aiogram import Router, F
 from aiogram.types import Message
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
-from aiogram.types import ReplyKeyboardRemove
 
 from app.keyboards import (
     get_language_keyboard,
@@ -10,7 +9,12 @@ from app.keyboards import (
     get_edit_data_menu,
     get_back_keyboard,
 )
-from app.database import save_user, get_user_by_telegram_id, update_user_field
+from app.database import (
+    save_user,
+    save_partial_user,
+    get_user_by_telegram_id,
+    update_user_field,
+)
 from app.messages import get_lang_safe
 
 import re
@@ -47,7 +51,7 @@ async def set_language(message: Message, state: FSMContext):
     if user:
         await update_user_field(message.from_user.id, "lang", lang)
     else:
-        await save_user(telegram_id=message.from_user.id, lang=lang)
+        await save_partial_user(telegram_id=message.from_user.id, lang=lang)
 
     await state.clear()
     texts = get_lang_safe(lang)
@@ -63,7 +67,7 @@ async def register_start(message: Message, state: FSMContext):
     texts = get_lang_safe(lang)
 
     await state.set_state(RegisterState.waiting_for_full_name)
-    await message.answer(texts["full_name"], reply_markup=get_back_keyboard(lang))
+    await message.answer(texts["ask_full_name"], reply_markup=get_back_keyboard(lang))
 
 
 @router.message(RegisterState.waiting_for_full_name)
@@ -75,17 +79,17 @@ async def process_full_name(message: Message, state: FSMContext):
     texts = get_lang_safe(lang)
 
     await state.set_state(RegisterState.waiting_for_phone)
-    await message.answer(texts["phone"], reply_markup=get_back_keyboard(lang))
+    await message.answer(texts["ask_phone"], reply_markup=get_back_keyboard(lang))
 
 
 @router.message(RegisterState.waiting_for_phone)
 async def process_phone(message: Message, state: FSMContext):
     phone = message.text.strip()
-    if not re.match(r"^\+?\d{9,15}$", phone):
+    if not re.match(r"^\d{9}$", phone):
         user = await get_user_by_telegram_id(message.from_user.id)
         lang = user["lang"] if user else "ru"
         texts = get_lang_safe(lang)
-        await message.answer(texts["invalid_phone"])
+        await message.answer("❗ Неверный номер. Введите 9 цифр, например: 991112233")
         return
 
     await state.update_data(phone=phone)
@@ -94,19 +98,47 @@ async def process_phone(message: Message, state: FSMContext):
     texts = get_lang_safe(lang)
 
     await state.set_state(RegisterState.waiting_for_birthday)
-    await message.answer(texts["birthday"], reply_markup=get_back_keyboard(lang))
+    await message.answer(texts["ask_birth_day"], reply_markup=get_back_keyboard(lang))
 
 
 @router.message(RegisterState.waiting_for_birthday)
 async def process_birthday(message: Message, state: FSMContext):
-    birthday = message.text.strip()
+    day = message.text.strip()
+    await state.update_data(birthday_day=day)
+    user = await get_user_by_telegram_id(message.from_user.id)
+    lang = user["lang"] if user else "ru"
+    texts = get_lang_safe(lang)
+
+    await state.set_state(RegisterState.waiting_for_birthday)
+    await message.answer(texts["ask_birth_month"], reply_markup=get_back_keyboard(lang))
+    await state.set_state("waiting_for_birth_month")
+
+
+@router.message(F.state == "waiting_for_birth_month")
+async def process_birth_month(message: Message, state: FSMContext):
+    month = message.text.strip()
+    await state.update_data(birthday_month=month)
+    user = await get_user_by_telegram_id(message.from_user.id)
+    lang = user["lang"] if user else "ru"
+    texts = get_lang_safe(lang)
+
+    await message.answer(texts["ask_birth_year"], reply_markup=get_back_keyboard(lang))
+    await state.set_state("waiting_for_birth_year")
+
+
+@router.message(F.state == "waiting_for_birth_year")
+async def process_birth_year(message: Message, state: FSMContext):
+    year = message.text.strip()
+    data = await state.get_data()
+    birthday = f"{data['birthday_day']}.{data['birthday_month']}.{year}"
     await state.update_data(birthday=birthday)
+
     user = await get_user_by_telegram_id(message.from_user.id)
     lang = user["lang"] if user else "ru"
     texts = get_lang_safe(lang)
 
     await state.set_state(RegisterState.waiting_for_pinfl)
-    await message.answer(texts["pinfl"], reply_markup=get_back_keyboard(lang))
+    await message.answer(texts["ask_pinfl"], reply_markup=get_back_keyboard(lang))
 
 
 @router.message(RegisterState.waiting_for_pinfl)
@@ -127,7 +159,7 @@ async def process_pinfl(message: Message, state: FSMContext):
     )
 
     await state.clear()
-    await message.answer(texts["saved"], reply_markup=get_main_menu(lang))
+    await message.answer(texts["data_updated"], reply_markup=get_main_menu(lang))
 
 
 # ====== ИЗМЕНЕНИЕ ДАННЫХ ======
@@ -139,20 +171,20 @@ async def edit_data(message: Message, state: FSMContext):
     texts = get_lang_safe(lang)
 
     await state.set_state(EditFieldState.choosing_field)
-    await message.answer(texts["choose_field"], reply_markup=get_edit_data_menu(lang))
+    await message.answer(texts["edit_data_prompt"], reply_markup=get_edit_data_menu(lang))
 
 
 @router.message(EditFieldState.choosing_field)
 async def choose_field_to_edit(message: Message, state: FSMContext):
     field_map = {
         "📛 ФИО": "full_name",
-        "📱 Телефон": "phone",
-        "🎂 Дата рождения": "birthday",
+        "📞 Телефон": "phone",
+        "📅 Дата рождения": "birthday",
         "🆔 ПИНФЛ": "pinfl",
-        "📛 Ism sharifi": "full_name",
-        "📱 Telefon": "phone",
-        "🎂 Tug‘ilgan sana": "birthday",
-        "🆔 JSHSHIR": "pinfl",
+        "📛 To‘liq ismingizni kiriting:": "full_name",
+        "📞 Telefon raqamingizni kiriting": "phone",
+        "📅 Tug‘ilgan sanangizni kiriting": "birthday",
+        "🆔 PINFL raqamingizni kiriting": "pinfl",
     }
 
     field = field_map.get(message.text)
@@ -163,7 +195,7 @@ async def choose_field_to_edit(message: Message, state: FSMContext):
         texts = get_lang_safe(lang)
 
         await state.set_state(EditFieldState.editing_value)
-        await message.answer(texts["enter_new_value"], reply_markup=get_back_keyboard(lang))
+        await message.answer("🔁 Введите новое значение", reply_markup=get_back_keyboard(lang))
     else:
         await message.answer("❗ Неверный выбор")
 
