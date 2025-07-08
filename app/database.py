@@ -41,11 +41,13 @@ async def save_partial_user(telegram_id: int, lang: str = "ru"):
 # 🔍 Получить по Telegram ID
 async def get_user_by_telegram_id(telegram_id: int):
     async with aiosqlite.connect(DB_NAME) as db:
+        db.row_factory = aiosqlite.Row  # ✅ возвращаем словарь
         async with db.execute(
             "SELECT full_name, phone, birthday, pinfl, lang FROM users WHERE telegram_id = ?",
             (telegram_id,)
         ) as cursor:
-            return await cursor.fetchone()
+            row = await cursor.fetchone()
+            return dict(row) if row else None
 
 # 🔍 Получить только язык пользователя
 async def get_user_lang(telegram_id: int) -> str:
